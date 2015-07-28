@@ -1,23 +1,27 @@
 from django import forms
-from .models import UserRegistration, UserAuthentication, ProtocolUpload
+from .models import Protocol, UserProfile, User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-class UserRegistrationForm(forms.ModelForm):
-    class Meta:
-        model = UserRegistration
-        fields = ['user_name', 'email', 'password']
-        exclude = [None]
+'''class UserRegistrationForm(UserCreationForm):
 
-class UserAuthenticationForm(forms.ModelForm):
-    class Meta:
-        model = UserAuthentication
-        fields = ['user_name', 'password']
-        exclude = [None]
-
+class UserAuthenticationForm(AuthenticationForm):
+'''    
 class ProtocolUploadForm(forms.ModelForm):
     class Meta:
-        model = ProtocolUpload
-        fields = ['title', 'protocol_type', 'rating', 'protocol']
+        model = Protocol
+        fields = ['title', 'description', 'protocol_type', 'reagents', 'protocol']
         exclude = [None]
+
+class UserForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput())
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+        
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['bio']

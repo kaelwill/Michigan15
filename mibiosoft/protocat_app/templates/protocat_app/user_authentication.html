@@ -1,21 +1,14 @@
 {% extends 'base.html' %}
 
-{% load staticfiles %}
-
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4"></div>
-            </div>
-            <div class="col-md-4"></div>
-               <form method="POST" action=""> {% csrf_token %} {#  allows POST requests #}
-                    {{ form.as_p }}
-                   <input type="submit" value="Sign In">
-               </form>
-
-            </div>
-            <div class="col-md-4"></div>
-            </div>
-    </div>
-
+  <form id ="id=login_form" method = 'POST' action="">
+    {% csrf_token %}
+    Username: <input type="text" name = "username" value=""  /> 
+    <br />
+    <br />
+    Password: <input type="password" name="password" value="" /> 
+    <br />
+    <br />
+    <input type="submit" value="Log In" />
+  </form>
 {% endblock %}

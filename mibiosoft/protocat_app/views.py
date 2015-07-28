@@ -1,12 +1,16 @@
-from django.shortcuts import render, HttpResponse
-from .forms import UserRegistrationForm, UserAuthenticationForm, ProtocolUploadForm
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect, render_to_response
+from .forms import ProtocolUploadForm, UserProfileForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
 from django import forms
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from django.core import exceptions
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.core.context_processors import csrf
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.template import RequestContext
 
 def index(request):
     context = {
@@ -17,7 +21,7 @@ def index(request):
 # add set test cookie
 
 def user_registration(request):
-    form = UserRegistrationForm(request.POST)
+    form = UserCreationForm(request.POST)
 
     context = {
         'title': 'User Registration - ProtoCat',
@@ -27,34 +31,29 @@ def user_registration(request):
 
     if form.is_valid():
         instance = form.save(commit=False)
-        instance.user_name = form.cleaned_data.get('user_name')
+        instance.username = form.cleaned_data.get('user_name')
         instance.email = form.cleaned_data.get('email')
         instance.password = form.cleaned_data.get('password')
-        user = User.objects.create_user(instance.user_name, instance.email, instance.password)
+        user = User.objects.create_user(instance.username, instance.email, instance.password)
 
         return HttpResponse('You have successfully registered')
 
     return render(request, 'protocat_app/user_registration.html', context)
 
 def user_authentication(request):
-    # not working...
     if request.user.is_authenticated():
         return HttpResponse('You are already logged in')
 
-    form = UserAuthenticationForm(request.POST)
-    context = {
-        'title': 'User Authentication - ProtoCat',
-        'descr': 'User Authentication --> Because why not!',
-        'form': form
-    }
-
-    if form.is_valid():
-        user = authenticate(username = form.cleaned_data.get('user_name'), password=form.cleaned_data.get('password'))
-
+    context = RequestContext(request)
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
         if user is not None:
-            # the pasword verified for the user
+                # the pasword verified for the user
             if user.is_active:
-                return HttpResponse('user.is_active passed, You are authenicated')
+                login(request, user)
+                return HttpResponseRedirect('/user_home/')
 
             else:
                 context.banner = ('The password is valid, but the account has been diasbled! User: ' + form.cleaned_data.get('user_name'))
@@ -65,6 +64,11 @@ def user_authentication(request):
             return HttpResponse('<h1>You are currently logged in.</h1>')
 
     return render(request, 'protocat_app/user_authentication.html', context)
+
+def user_logout(request):
+    logout(request)
+    return HttpResponseRedirect('/')
+
 
 def protocol_display(request):
     context = {
@@ -80,23 +84,48 @@ def user_home(request):
     }
     return render(request, 'protocat_app/user_home.html', context)
 
+@login_required(login_url='/user_authentication')
 def protocol_upload(request):
-    #if user.is_active:
-    form = ProtocolUploadForm(request.POST)
-    context = {
-            'title': 'Protocol Upload',
-            'form': form
-        }
-    if form.is_valid():
-        instance = form.save()
-        instance.title = form.cleaned_data.get('title')
-        instance.protocol_type = form.cleaned_data.get('protocol_type')
-        instance.rating = form.cleaned_data.get('rating')
-        instance.protocol = form.cleaned_data.get('protocol')
-        instance.date_of_upload = form.cleaned_data.get('date_of_upload')
-        return HttpResponse('You have posted a protocol')
+    user = request.user
+    if user.is_authenticated:
+        form = ProtocolUploadForm(request.POST)
+        context = {
+                'title': 'Protocol Upload',
+                'form': form
+            }
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.title = form.cleaned_data.get('title')
+            instance.author = request.user
+            instance.protocol_type = form.cleaned_data.get('protocol_type')
+            instance.rating = 0.00
+            instance.reagents = form.cleaned_data.get('reagents')
+            instance.protocol = form.cleaned_data.get('protocol')
+            instance.date_of_upload = form.cleaned_data.get('date_of_upload')
+            instance.save()
+            return HttpResponse('You have posted a protocol')
 
+        else:
+            return render(request, 'protocat_app/protocol_upload.html', context)
     else:
-        return render(request, 'protocat_app/protocol_upload.html', context)
-    #else:
-        #return HttpResponse('Log in first')
+        return HttpResponseRedirect('/user_authentication/')
+
+@login_required(login_url='/user_authentication')
+def profile_page(request):
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            return HttpResponse('Information Saved')
+    else:
+        user = request.user
+        profile = user.profile
+        form = UserProfileForm(instance=profile)
+
+        args = {}
+        args.update(csrf(request))
+
+        args['form'] = form
+
+        return render_to_response('protocat_app/profile_page.html', args)
+   
