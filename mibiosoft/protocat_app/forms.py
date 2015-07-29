@@ -4,7 +4,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-'''class UserRegistrationForm(UserCreationForm):
+'''
+class UserRegistrationForm(UserCreationForm):
 
 class UserAuthenticationForm(AuthenticationForm):
 '''    

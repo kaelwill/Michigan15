@@ -47,7 +47,6 @@ class Protocol(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
     bio = models.TextField(default='None', blank = True)
-    #USERNAME_FIELD = user.username
     REQUIRED_FIELDS = ('user',)
     User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
 
