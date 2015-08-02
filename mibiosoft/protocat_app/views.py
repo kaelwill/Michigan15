@@ -1,5 +1,5 @@
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect, render_to_response
-from .forms import ProtocolUploadForm, UserProfileForm
+from .forms import ProtocolUploadForm, UserProfileForm, UserRegistrationForm, UserForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
@@ -9,7 +9,6 @@ from django.core import exceptions
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.core.context_processors import csrf
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.template import RequestContext
 
 def index(request):
@@ -21,7 +20,7 @@ def index(request):
 # add set test cookie
 
 def user_registration(request):
-    form = UserCreationForm(request.POST)
+    form = UserRegistrationForm(request.POST)
 
     context = {
         'title': 'User Registration - ProtoCat',

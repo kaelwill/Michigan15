@@ -3,12 +3,12 @@ from .models import Protocol, UserProfile, User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-
-'''
-class UserRegistrationForm(UserCreationForm):
-
-class UserAuthenticationForm(AuthenticationForm):
-'''    
+class UserRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+        exclude = [None]
+   
 class ProtocolUploadForm(forms.ModelForm):
     class Meta:
         model = Protocol
